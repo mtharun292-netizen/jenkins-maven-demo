@@ -5,32 +5,53 @@ pipeline {
         maven 'Maven'
     }
 
+    triggers {
+        githubPush()
+    }
+
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Build with Maven') {
+        stage('Build') {
             steps {
                 sh 'mvn clean package'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Unit Test') {
             steps {
-                sh 'docker build -t hello-app:1.0 .'
+                sh 'echo "Running unit tests (mock stage)"'
             }
         }
 
-        stage('Run Container') {
+        stage('Build Docker Image') {
             steps {
                 sh '''
-                  docker rm -f hello-app || true
-                  docker run -d --name hello-app hello-app:1.0
+                  docker build -t hello-app:${BUILD_NUMBER} .
                 '''
             }
+        }
+
+        stage('Deploy (Mock)') {
+            steps {
+                sh '''
+                  echo "Deploying hello-app:${BUILD_NUMBER}"
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Build & pipeline successful'
+        }
+        failure {
+            echo '❌ Build failed – investigate logs'
         }
     }
 }
